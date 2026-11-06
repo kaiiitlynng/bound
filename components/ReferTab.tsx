@@ -2,14 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { EMPTY_NEED, isComplete, needSummary, toFilters } from "@/lib/need";
-import { rank, type Ranked } from "@/lib/score";
+import { affirmingEvidence, rank, type Ranked } from "@/lib/score";
 import { PROVIDERS, useStore } from "@/lib/store";
 import { addWeeks } from "@/lib/dates";
 import type { NeedForm, Referral } from "@/lib/types";
 import { NeedFormCard } from "./NeedFormCard";
 import { ProviderCard } from "./ProviderCard";
-import { ReferralPanel, type ExplainState } from "./ReferralPanel";
-import { Eyebrow } from "./ui";
+import { ReferralPanel, WhyCard, type ExplainState } from "./ReferralPanel";
 
 export function ReferTab({ onGoWorkspace }: { onGoWorkspace: () => void }) {
   const { state, addReferral } = useStore();
@@ -30,6 +29,8 @@ export function ReferTab({ onGoWorkspace }: { onGoWorkspace: () => void }) {
   const flagged = ranked.filter((r) => r.stats.gapFlag);
   const others = ranked.filter((r) => !recommended.includes(r) && !flagged.includes(r));
   const selected = ranked.find((r) => r.provider.id === selectedId) ?? null;
+  const exKey = selected ? `${selected.provider.id}|${summary}` : "";
+  const ex = explanations[exKey];
 
   const step = confirmed ? 4 : selected ? 3 : showResults ? 2 : 1;
 
@@ -51,7 +52,17 @@ export function ReferTab({ onGoWorkspace }: { onGoWorkspace: () => void }) {
             outcomes_recorded: r.stats.n,
             screened: r.stats.completed,
             median_days_to_visit: r.stats.medianDays,
-            affirming_score_pct: r.stats.affirming == null ? null : Math.round(r.stats.affirming * 100),
+            affirming_evidence: (() => {
+              const ev = affirmingEvidence(state.outcomes.filter((o) => o.providerId === r.provider.id));
+              return {
+                clients_who_rated_respect: ev.rated,
+                rated_respect_4_or_5: ev.respectful,
+                had_to_explain_identity: ev.explained,
+                misgendered_reports: ev.misgendered,
+                client_quotes: ev.quotes,
+                listed_as_affirming_in_directories_self_reported: r.provider.directoryAffirming,
+              };
+            })(),
             verified: r.stats.verified,
             flagged_patterns: r.stats.patterns.map((p) => p.text),
             affirming_but_low_completion: r.stats.gapFlag,
@@ -66,7 +77,7 @@ export function ReferTab({ onGoWorkspace }: { onGoWorkspace: () => void }) {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Could not write the script");
+      if (!res.ok) throw new Error(json.error ?? "Couldn't load");
       setExplanations((e) => ({ ...e, [key]: json }));
     } catch (err) {
       setExplanations((e) => ({ ...e, [key]: { error: err instanceof Error ? err.message : String(err) } }));
@@ -106,58 +117,59 @@ export function ReferTab({ onGoWorkspace }: { onGoWorkspace: () => void }) {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <Stepper step={step} />
       <NeedFormCard value={form} onChange={updateForm} onSubmit={() => setSearched(true)} searched={searched} />
 
       {showResults && (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <div className="min-w-0 space-y-4">
-            <div className="px-1">
-              <Eyebrow>Choose a provider</Eyebrow>
-            </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="min-w-0 space-y-6">
+            <Group title="Recommended">
+              {recommended.length > 0 ? (
+                recommended.map((r, i) => card(r, i + 1))
+              ) : (
+                <p className="text-[13px] text-[var(--muted)]">No verified match.</p>
+              )}
+            </Group>
 
-            {recommended.length > 0 ? (
-              recommended.map((r, i) => card(r, i + 1))
-            ) : (
-              <p className="rounded-2xl border border-dashed border-[var(--line)] p-4 text-sm text-[var(--muted)]">
-                No verified match yet.
-              </p>
-            )}
-
-            {flagged.length > 0 && (
-              <div className="space-y-3 pt-2">
-                <div className="px-1 text-xs font-semibold uppercase tracking-wide text-[var(--bad-ink)]">
-                  Not recommended
-                </div>
-                {flagged.map((r) => card(r))}
-              </div>
-            )}
+            {flagged.length > 0 && <Group title="Not recommended">{flagged.map((r) => card(r))}</Group>}
 
             {others.length > 0 && (
-              <div className="space-y-3 pt-2">
-                <button
-                  onClick={() => setShowMore((s) => !s)}
-                  className="px-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted)] hover:text-[var(--ink)]"
-                >
-                  {showMore || recommended.length === 0 ? "▾" : "▸"} Other options ({others.length})
+              <div className="space-y-2">
+                <button onClick={() => setShowMore((s) => !s)} className="text-[13px] font-semibold text-[var(--ink)] hover:opacity-70">
+                  Other options <span className="font-normal text-[var(--muted)]">{others.length}</span>{" "}
+                  <span className="text-[var(--muted)]">{showMore || recommended.length === 0 ? "▾" : "▸"}</span>
                 </button>
-                {(showMore || recommended.length === 0) && others.map((r) => card(r))}
+                {(showMore || recommended.length === 0) && <div className="space-y-2">{others.map((r) => card(r))}</div>}
               </div>
             )}
           </div>
 
-          <div className="lg:sticky lg:top-6 lg:self-start">
-            <ReferralPanel
-              r={selected}
-              need={summary}
-              explanation={selected ? explanations[`${selected.provider.id}|${summary}`] : undefined}
-              onRetryExplain={() => selected && explain(selected)}
-              onConfirm={confirm}
-              confirmed={confirmed}
-              onGoWorkspace={onGoWorkspace}
-              onNewReferral={reset}
-            />
+          <div className="space-y-3 lg:sticky lg:top-6 lg:self-start">
+            {selected ? (
+              <>
+                {!confirmed && (
+                  <WhyCard
+                    r={selected}
+                    outcomes={state.outcomes.filter((o) => o.providerId === selected.provider.id)}
+                    explanation={ex}
+                    onRetry={() => explain(selected)}
+                  />
+                )}
+                <ReferralPanel
+                  key={selected.provider.id}
+                  r={selected}
+                  need={summary}
+                  explanation={ex && typeof ex === "object" && "affirming" in ex ? ex : null}
+                  onConfirm={confirm}
+                  confirmed={confirmed}
+                  onGoWorkspace={onGoWorkspace}
+                  onNewReferral={reset}
+                />
+              </>
+            ) : (
+              <p className="rounded-md border border-dashed border-[var(--line)] p-5 text-[13px] text-[var(--muted)]">Select a provider</p>
+            )}
           </div>
         </div>
       )}
@@ -165,24 +177,28 @@ export function ReferTab({ onGoWorkspace }: { onGoWorkspace: () => void }) {
   );
 }
 
-function Stepper({ step }: { step: number }) {
-  const steps = ["Client's needs", "Choose provider", "Send & schedule follow-up"];
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+    <div className="space-y-2">
+      <h2 className="text-[13px] font-semibold text-[var(--ink)]">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Stepper({ step }: { step: number }) {
+  const steps = ["Needs", "Provider", "Send"];
+  return (
+    <ol className="flex items-center gap-3 text-[13px]">
       {steps.map((s, i) => {
         const n = i + 1;
-        const state = n < step ? "done" : n === step ? "now" : "todo";
+        const cls = n < step ? "text-[var(--muted)]" : n === step ? "font-semibold text-[var(--ink)]" : "text-[var(--muted)]";
         return (
-          <li key={s} className="flex items-center gap-2">
-            <span
-              className={`grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${
-                state === "todo" ? "bg-[var(--chip)] text-[var(--muted)]" : state === "done" ? "bg-[var(--complete)] text-white" : "bg-[var(--ink)] text-[var(--card)]"
-              }`}
-            >
-              {state === "done" ? "✓" : n}
+          <li key={s} className="flex items-center gap-3">
+            <span className={cls}>
+              {n}. {s}
             </span>
-            <span className={state === "todo" ? "text-[var(--muted)]" : "font-medium text-[var(--ink)]"}>{s}</span>
-            {n < steps.length && <span className="text-[var(--line)]">—</span>}
+            {n < steps.length && <span className="text-[var(--line)]">/</span>}
           </li>
         );
       })}

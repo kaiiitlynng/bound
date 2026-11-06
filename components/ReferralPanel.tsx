@@ -2,26 +2,90 @@
 
 import { useState } from "react";
 import { addWeeks, fmtDate } from "@/lib/dates";
-import type { Ranked } from "@/lib/score";
-import type { Explanation, Referral } from "@/lib/types";
-import { Button, Card, Eyebrow, Segmented } from "./ui";
+import { affirmingEvidence, type Ranked } from "@/lib/score";
+import type { Explanation, Outcome, Referral } from "@/lib/types";
+import { Button, Card, Field, Segmented, inputCls } from "./ui";
 
 export type ExplainState = Explanation | "loading" | { error: string } | undefined;
+
+/** The "Why", separate from send/schedule. Affirming is shown with its evidence, not a bare score. */
+export function WhyCard({
+  r,
+  outcomes,
+  explanation,
+  onRetry,
+}: {
+  r: Ranked;
+  outcomes: Outcome[];
+  explanation: ExplainState;
+  onRetry: () => void;
+}) {
+  const ev = affirmingEvidence(outcomes);
+  const ex = explanation && typeof explanation === "object" && "affirming" in explanation ? explanation : null;
+  const loading = explanation === "loading";
+  const error = explanation && typeof explanation === "object" && "error" in explanation ? explanation.error : null;
+
+  return (
+    <Card className="bg-[var(--subtle)]">
+      <div>
+        <div className="text-[12px] text-[var(--muted)]">Why affirming</div>
+        {loading && <p className="mt-1 animate-pulse text-[13px] text-[var(--muted)]">…</p>}
+        {error && (
+          <p className="mt-1 text-[13px] text-[var(--bad-ink)]">
+            {error}{" "}
+            <button className="underline" onClick={onRetry}>
+              Retry
+            </button>
+          </p>
+        )}
+        {ex && <p className="mt-1 text-[14px] leading-relaxed text-[var(--ink)]">{ex.affirming}</p>}
+        {ev.rated === 0 ? (
+          <p className="mt-1 text-[13px] text-[var(--muted)]">No client reports yet.</p>
+        ) : (
+          <ul className="mt-2 space-y-1 text-[13px] text-[var(--ink)]">
+            <li>
+              <span className="tabular-nums">{ev.respectful}/{ev.rated}</span> <span className="text-[var(--muted)]">felt respected (4–5 of 5)</span>
+            </li>
+            <li>
+              <span className="tabular-nums">{ev.explained}/{ev.n}</span> <span className="text-[var(--muted)]">had to explain their identity</span>
+            </li>
+            {ev.misgendered > 0 && (
+              <li>
+                <span className="tabular-nums">{ev.misgendered}</span> <span className="text-[var(--muted)]">misgendered</span>
+              </li>
+            )}
+          </ul>
+        )}
+        {ev.quotes.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            {ev.quotes.map((q) => (
+              <p key={q} className="border-l-2 border-[var(--line)] pl-2.5 text-[13px] text-[var(--muted)]">
+                &ldquo;{q}&rdquo;
+              </p>
+            ))}
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-[var(--muted)]">
+          {r.provider.directoryAffirming ? "Listed as affirming in directories (self-reported). " : ""}
+          {ev.n > 0 ? `${ev.n} simulated check-ins.` : ""}
+        </p>
+      </div>
+    </Card>
+  );
+}
 
 export function ReferralPanel({
   r,
   need,
   explanation,
-  onRetryExplain,
   onConfirm,
   confirmed,
   onGoWorkspace,
   onNewReferral,
 }: {
-  r: Ranked | null;
+  r: Ranked;
   need: string;
-  explanation: ExplainState;
-  onRetryExplain: () => void;
+  explanation: Explanation | null;
   onConfirm: (method: Referral["method"], weeks: number) => void;
   confirmed: Referral | null;
   onGoWorkspace: () => void;
@@ -29,119 +93,67 @@ export function ReferralPanel({
 }) {
   const [method, setMethod] = useState<Referral["method"]>("text");
   const [weeks, setWeeks] = useState(4);
+  const p = r.provider;
+  const due = addWeeks(weeks);
 
   if (confirmed) {
     return (
-      <Card className="border-[var(--complete)]/50">
-        <div className="text-2xl">✓</div>
-        <h3 className="mt-1 text-lg font-semibold text-[var(--ink)]">Referral logged</h3>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          {confirmed.method === "text" ? "Text check-in" : "Follow-up call"} reminder set for{" "}
-          <strong className="text-[var(--ink)]">{fmtDate(confirmed.checkinDue)}</strong>.
+      <Card>
+        <h3 className="text-[15px] font-semibold text-[var(--ink)]">Referral logged</h3>
+        <p className="mt-1 text-[13px] text-[var(--muted)]">
+          {confirmed.method === "text" ? "Text" : "Call"} reminder · {fmtDate(confirmed.checkinDue)}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={onGoWorkspace}>Go to Workspace</Button>
+          <Button onClick={onGoWorkspace}>Workspace</Button>
           <Button variant="secondary" onClick={onNewReferral}>
-            Start another referral
+            New referral
           </Button>
         </div>
       </Card>
     );
   }
 
-  if (!r) {
-    return (
-      <Card>
-        <Eyebrow>Send &amp; schedule</Eyebrow>
-        <p className="mt-2 text-sm text-[var(--muted)]">Choose a provider.</p>
-      </Card>
-    );
-  }
-
-  const p = r.provider;
-  const due = addWeeks(weeks);
-  const ex = explanation && typeof explanation === "object" && "reason" in explanation ? explanation : null;
-
   return (
     <Card>
-      <Eyebrow>Send &amp; schedule</Eyebrow>
-      <h3 className="mt-1 text-lg font-semibold leading-snug text-[var(--ink)]">{p.name}</h3>
-      <p className="text-sm text-[var(--muted)]">
+      <h3 className="text-[15px] font-semibold text-[var(--ink)]">{p.name}</h3>
+      <p className="text-[13px] text-[var(--muted)]">
         {p.address}
         {p.phone ? ` · ${p.phone}` : ""}
       </p>
 
-      {/* a. why + script */}
-      <SubStep n="a" title="Why + call script">
-        {explanation === "loading" && <p className="animate-pulse text-sm text-[var(--muted)]">Writing script…</p>}
-        {explanation && typeof explanation === "object" && "error" in explanation && (
-          <p className="text-sm text-[var(--bad-ink)]">
-            {explanation.error}{" "}
-            <button className="underline" onClick={onRetryExplain}>
-              Retry
-            </button>
-          </p>
-        )}
-        {ex && (
-          <div className="space-y-2 text-sm text-[var(--ink)]">
-            <p>{ex.reason}</p>
-            <p className="whitespace-pre-line rounded-xl bg-[var(--chip)] p-3">
-              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[var(--muted)]">Say on the call</span>
-              {ex.booking_script}
-            </p>
-          </div>
-        )}
-      </SubStep>
-
-      {/* b. email */}
-      <SubStep n="b" title="Email (optional)">
-        <EmailComposer key={`${p.id}-${ex ? 1 : 0}-${weeks}-${method}`} r={r} need={need} explanation={ex} due={due} method={method} />
-      </SubStep>
-
-      {/* c. log + reminder */}
-      <SubStep n="c" title="Log & set follow-up">
-        <div className="space-y-3">
-          <div>
-            <div className="mb-1.5 text-xs text-[var(--muted)]">Check-in</div>
-            <Segmented
-              value={method}
-              onChange={setMethod}
-              options={[
-                { value: "text", label: "Text (opted in)" },
-                { value: "call", label: "Staff call" },
-              ]}
-            />
-          </div>
-          <div>
-            <div className="mb-1.5 text-xs text-[var(--muted)]">In</div>
-            <Segmented
-              value={String(weeks)}
-              onChange={(v) => setWeeks(Number(v))}
-              options={[
-                { value: "2", label: "2 weeks" },
-                { value: "4", label: "4 weeks" },
-                { value: "6", label: "6 weeks" },
-              ]}
-            />
-          </div>
-          <Button onClick={() => onConfirm(method, weeks)} className="w-full py-2">
-            Log referral · remind me {fmtDate(due)}
-          </Button>
-        </div>
-      </SubStep>
-    </Card>
-  );
-}
-
-function SubStep({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
-  return (
-    <div className="mt-4 border-t border-[var(--line)] pt-4">
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
-        <span className="grid h-5 w-5 place-items-center rounded-full bg-[var(--chip)] text-[11px]">{n}</span>
-        {title}
+      <div className="mt-5 space-y-2 border-t border-[var(--line)] pt-4">
+        <div className="text-[13px] font-semibold text-[var(--ink)]">Email</div>
+        <EmailComposer key={`${p.id}-${explanation ? 1 : 0}-${weeks}-${method}`} r={r} need={need} explanation={explanation} due={due} method={method} />
       </div>
-      {children}
-    </div>
+
+      <div className="mt-5 space-y-4 border-t border-[var(--line)] pt-4">
+        <div className="text-[13px] font-semibold text-[var(--ink)]">Follow-up</div>
+        <Field label="Check-in">
+          <Segmented
+            value={method}
+            onChange={setMethod}
+            options={[
+              { value: "text", label: "Text" },
+              { value: "call", label: "Call" },
+            ]}
+          />
+        </Field>
+        <Field label="In">
+          <Segmented
+            value={String(weeks)}
+            onChange={(v) => setWeeks(Number(v))}
+            options={[
+              { value: "2", label: "2 wk" },
+              { value: "4", label: "4 wk" },
+              { value: "6", label: "6 wk" },
+            ]}
+          />
+        </Field>
+        <Button onClick={() => onConfirm(method, weeks)} className="w-full py-2">
+          Log referral · {fmtDate(due)}
+        </Button>
+      </div>
+    </Card>
   );
 }
 
@@ -161,6 +173,7 @@ function EmailComposer({
   const p = r.provider;
   const [to, setTo] = useState<"client" | "provider">("client");
   const [address, setAddress] = useState("");
+  const [edited, setEdited] = useState<Record<"client" | "provider", string>>({ client: "", provider: "" });
 
   const templates = {
     client: {
@@ -168,7 +181,7 @@ function EmailComposer({
       body: [
         "Hi,",
         "",
-        "Here's the provider we talked about for your cervical cancer screening (Pap/HPV test):",
+        "Here's the provider for your cervical cancer screening (Pap/HPV test):",
         "",
         p.name,
         p.address,
@@ -177,10 +190,9 @@ function EmailComposer({
         "",
         explanation?.client_explainer ?? null,
         explanation ? "" : null,
-        `We'll ${method === "text" ? "text you" : "give you a call"} around ${fmtDate(due)} to see how it went. If you have any trouble booking, just reply to this email.`,
+        `We'll ${method === "text" ? "text" : "call"} you around ${fmtDate(due)} to see how it went.`,
         "",
-        "Take care,",
-        "[Your name], [Center name]",
+        "[Your name], [Center]",
       ],
     },
     provider: {
@@ -188,23 +200,18 @@ function EmailComposer({
       body: [
         "Hello,",
         "",
-        "I'm a patient navigator at [Center name], referring a new patient for a cervical cancer screening (Pap/HPV test).",
+        "I'm referring a new patient for a cervical cancer screening (Pap/HPV test).",
         "",
         `Needs: ${need}.`,
         "",
-        "Could you let me know the best way to schedule, and whether you have availability in the next few weeks?",
+        "What's the best way to schedule?",
         "",
-        "Thank you,",
-        "[Your name], [Center name], [Phone]",
+        "[Your name], [Center], [Phone]",
       ],
     },
   }[to];
 
-  const [body, setBody] = useState<Record<"client" | "provider", string>>({
-    client: "",
-    provider: "",
-  });
-  const text = body[to] || templates.body.filter((l) => l !== null).join("\n");
+  const text = edited[to] || templates.body.filter((l) => l !== null).join("\n");
   const href = `mailto:${encodeURIComponent(address)}?subject=${encodeURIComponent(templates.subject)}&body=${encodeURIComponent(text)}`;
 
   return (
@@ -213,28 +220,22 @@ function EmailComposer({
         value={to}
         onChange={setTo}
         options={[
-          { value: "client", label: "To client" },
-          { value: "provider", label: "To provider" },
+          { value: "client", label: "Client" },
+          { value: "provider", label: "Provider" },
         ]}
       />
-      <input
-        type="email"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder={to === "client" ? "Client's email (not saved)" : "Provider's referral email"}
-        className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--ink)]"
-      />
+      <input type="email" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Email (not saved)" className={inputCls} />
       <textarea
         value={text}
-        onChange={(e) => setBody((b) => ({ ...b, [to]: e.target.value }))}
-        rows={8}
-        className="w-full resize-y rounded-xl border border-[var(--line)] bg-[var(--card)] p-3 text-xs leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--ink)]"
+        onChange={(e) => setEdited((b) => ({ ...b, [to]: e.target.value }))}
+        rows={7}
+        className={`${inputCls} resize-y text-[12px] leading-relaxed`}
       />
       <a
         href={href}
-        className="inline-block rounded-full border border-[var(--line)] px-4 py-1.5 text-sm font-medium text-[var(--ink)] hover:bg-[var(--chip)]"
+        className="inline-block rounded border border-[var(--line)] px-3 py-1.5 text-[13px] font-medium text-[var(--ink)] hover:bg-[var(--subtle)]"
       >
-        ✉ Open in email app
+        Open in Mail
       </a>
     </div>
   );

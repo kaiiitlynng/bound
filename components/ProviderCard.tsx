@@ -2,12 +2,12 @@
 
 import type { Ranked } from "@/lib/score";
 import { ScoreBar } from "./ScoreBar";
-import { Pill } from "./ui";
+import { Button, Pill } from "./ui";
 
 export const SOURCE_LABEL = {
-  "CMS NPI Registry": "Real provider · CMS NPI Registry",
-  fictional: "Fictional demo provider",
-  program: "Public program · CDC NBCCEDP",
+  "CMS NPI Registry": "NPI Registry",
+  fictional: "Fictional",
+  program: "Public program",
 } as const;
 
 export function ProviderCard({
@@ -25,86 +25,53 @@ export function ProviderCard({
   const hasOutcomes = s.n > 0;
   return (
     <article
-      className={`rounded-2xl border bg-[var(--card)] p-4 transition sm:p-5 ${
-        selected
-          ? "border-[var(--ink)] ring-2 ring-[var(--ink)]/15"
-          : s.gapFlag
-            ? "border-[var(--bad)]/60"
-            : "border-[var(--line)]"
+      className={`rounded-md border bg-[var(--card)] p-4 transition-colors ${
+        selected ? "border-[var(--ink)]" : "border-[var(--line)]"
       }`}
     >
-      <div className="flex items-start gap-3">
-        {position != null && (
-          <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ink)] text-xs font-semibold text-[var(--card)]">
-            {position}
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3 className="text-base font-semibold text-[var(--ink)]">{p.name}</h3>
-            {p.directoryAffirming && <Pill tone="affirm">🏳️‍🌈 Listed as affirming in directories</Pill>}
+            {position != null && <span className="text-[13px] tabular-nums text-[var(--muted)]">{position}</span>}
+            <h3 className="text-[15px] font-semibold text-[var(--ink)]">{p.name}</h3>
+            {p.directoryAffirming && <Pill tone="affirm">Listed as affirming</Pill>}
           </div>
-          <p className="mt-0.5 text-sm text-[var(--muted)]">
-            {p.specialty} · {p.address}
-            {p.phone ? ` · ${p.phone}` : ""}
-          </p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
-            <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[var(--muted)]">{SOURCE_LABEL[p.source]}</span>
-            {hasOutcomes && (
-              <span className="rounded-full border border-dashed border-[var(--muted)]/60 px-2 py-0.5 text-[var(--muted)]">Simulated outcomes</span>
-            )}
-            {r.fitReasons.map((f) => (
-              <span key={f} className="rounded-full bg-[var(--chip)] px-2 py-0.5 text-[var(--ink)]">
-                ✓ {f}
-              </span>
-            ))}
-          </div>
+          {r.fitReasons.length > 0 && <p className="mt-1 text-[12px] text-[var(--ink)]/80">{r.fitReasons.join(" · ")}</p>}
         </div>
+        <Button variant={selected ? "primary" : "secondary"} onClick={onChoose} className="shrink-0">
+          {selected ? "Selected" : "Select"}
+        </Button>
       </div>
 
       {hasOutcomes ? (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <ScoreBar label="Affirming experience" value={s.affirming} tone="affirm" />
+        <div className="mt-4 sm:w-1/2">
           <ScoreBar
             label="Care completed"
             value={s.completion}
-            detail={`${s.completed} of ${s.n} screened${s.medianDays != null ? ` · ${s.medianDays} days median` : ""}`}
+            detail={`${s.completed}/${s.n} screened${s.medianDays != null ? ` · ${s.medianDays}d median` : ""}`}
             tone={s.completion < 0.5 ? "bad" : "complete"}
           />
         </div>
       ) : (
-        <p className="mt-3 text-sm text-[var(--muted)]">{p.note ?? "No outcomes yet."}</p>
-      )}
-
-      {!s.verified && hasOutcomes && (
-        <p className="mt-3 text-xs text-[var(--muted)]">Unverified · {s.n} outcome{s.n === 1 ? "" : "s"}</p>
+        p.note && <p className="mt-3 text-[13px] text-[var(--muted)]">{p.note}</p>
       )}
 
       {(s.gapFlag || s.patterns.length > 0) && (
-        <ul className="mt-3 space-y-1.5">
-          {s.gapFlag && (
-            <li className="rounded-lg bg-[var(--bad)]/10 px-3 py-2 text-sm font-medium text-[var(--bad-ink)]">
-              ⚠ Affirming, but clients often don&apos;t receive screening
-            </li>
-          )}
+        <div className="mt-3 space-y-1 text-[12px]">
+          {s.gapFlag && <p className="font-medium text-[var(--bad-ink)]">Clients feel respected, but often aren&apos;t screened</p>}
           {s.patterns.map((pt) => (
-            <li key={pt.tag} className="rounded-lg bg-[var(--warn)]/12 px-3 py-1.5 text-xs text-[var(--warn-ink)]">
-              Pattern: {pt.text}
-            </li>
+            <p key={pt.tag} className="text-[var(--warn-ink)]">
+              {pt.text}
+            </p>
           ))}
-        </ul>
+        </div>
       )}
 
-      <div className="mt-4">
-        <button
-          onClick={onChoose}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-            selected ? "bg-[var(--complete)] text-white" : "bg-[var(--ink)] text-[var(--card)] hover:opacity-90"
-          }`}
-        >
-          {selected ? "Chosen ✓" : s.gapFlag ? "Choose anyway" : "Choose this provider"}
-        </button>
-      </div>
+      <p className="mt-3 text-[11px] text-[var(--muted)]">
+        {SOURCE_LABEL[p.source]}
+        {hasOutcomes && " · Simulated outcomes"}
+        {!s.verified && hasOutcomes && ` · Unverified (${s.n})`}
+      </p>
     </article>
   );
 }

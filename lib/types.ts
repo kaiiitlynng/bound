@@ -109,7 +109,6 @@ export interface NeedForm {
 }
 
 export interface Explanation {
-  reason: string;
-  booking_script: string;
+  affirming: string;
   client_explainer: string;
 }

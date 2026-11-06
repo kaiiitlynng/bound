@@ -13,12 +13,12 @@ export function ScoreBar({
   const color = tone === "bad" ? "bg-[var(--bad)]" : tone === "affirm" ? "bg-[var(--affirm)]" : "bg-[var(--complete)]";
   return (
     <div className="min-w-0">
-      <div className="flex items-baseline justify-between gap-2 text-xs">
-        <span className="font-medium text-[var(--ink)]">{label}</span>
-        <span className="tabular-nums text-[var(--muted)]">{value == null ? "—" : `${pct}%`}</span>
+      <div className="flex items-baseline justify-between gap-2 text-[12px]">
+        <span className="text-[var(--muted)]">{label}</span>
+        <span className="tabular-nums text-[var(--ink)]">{value == null ? "—" : `${pct}%`}</span>
       </div>
-      <div className="mt-1 h-2 overflow-hidden rounded-full bg-[var(--track)]">
-        <div className={`h-full rounded-full ${color} transition-[width] duration-700 ease-out`} style={{ width: `${pct}%` }} />
+      <div className="mt-1.5 h-1 overflow-hidden rounded-sm bg-[var(--track)]">
+        <div className={`h-full ${color} transition-[width] duration-700 ease-out`} style={{ width: `${pct}%` }} />
       </div>
       {detail && <div className="mt-1 text-[11px] text-[var(--muted)]">{detail}</div>}
     </div>

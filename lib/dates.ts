@@ -13,7 +13,7 @@ export const addWeeks = (weeks: number) => new Date(Date.now() + weeks * 7 * DAY
 
 export function dueLabel(iso: string): { text: string; tone: "overdue" | "due" | "upcoming" } {
   const d = daysUntil(iso);
-  if (d < 0) return { text: `Overdue ${-d} day${d === -1 ? "" : "s"}`, tone: "overdue" };
-  if (d === 0) return { text: "Due today", tone: "due" };
-  return { text: `Due in ${d} day${d === 1 ? "" : "s"} · ${fmtDate(iso)}`, tone: "upcoming" };
+  if (d < 0) return { text: `Overdue ${-d}d`, tone: "overdue" };
+  if (d === 0) return { text: "Today", tone: "due" };
+  return { text: fmtDate(iso), tone: "upcoming" };
 }

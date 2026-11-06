@@ -121,7 +121,37 @@ export function statusOf(s: ProviderStats): ProviderStatus {
 
 export const STATUS_LABEL: Record<ProviderStatus, string> = {
   recommended: "Recommended",
-  flagged: "Affirming ≠ care completed",
+  flagged: "Flagged",
   unverified: "Unverified",
-  mixed: "Mixed results",
+  mixed: "Mixed",
 };
+
+export interface AffirmingEvidence {
+  n: number;
+  rated: number;
+  respectful: number; // rated 4–5 of 5
+  explained: number; // had to explain or defend identity
+  misgendered: number;
+  quotes: string[];
+}
+
+const TREATMENT = /kind|respect|welcom|comfortable|felt|staff|nice|lovely|warm|rude|explain|misgender|judg|assum|dismiss|lesbian|gay|queer|date women/i;
+
+/** The evidence behind "affirming": what clients actually reported. */
+export function affirmingEvidence(outcomes: Outcome[]): AffirmingEvidence {
+  const rated = outcomes.filter((o) => o.respected != null);
+  const quotes = [...rated]
+    .filter((o) => o.note && TREATMENT.test(o.note))
+    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
+    .map((o) => o.note)
+    .filter((q, i, arr) => arr.indexOf(q) === i)
+    .slice(0, 2);
+  return {
+    n: outcomes.length,
+    rated: rated.length,
+    respectful: rated.filter((o) => (o.respected as number) >= 4).length,
+    explained: outcomes.filter((o) => o.hadToExplain).length,
+    misgendered: outcomes.filter((o) => o.tag === "misgendered").length,
+    quotes,
+  };
+}

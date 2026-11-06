@@ -90,8 +90,7 @@ A client was referred for cervical cancer screening (Pap / HPV test). Convert he
 
 // ---------- 3. explanation + booking script ----------
 const ExplainSchema = z.object({
-  reason: z.string(),
-  booking_script: z.string(),
+  affirming: z.string(),
   client_explainer: z.string(),
 });
 
@@ -109,9 +108,8 @@ export async function explain(input: {
     fallbacks: "default",
     system: `${SAFETY}
 
-Write three short pieces for a navigator referring a client for cervical cancer screening:
-- reason: ONE sentence on why this provider fits, citing only the numbers in the stats (e.g. "7 of 9 clients sent here were screened, median 14 days to a visit"). If the provider is unverified, say so plainly.
-- booking_script: 2–3 lines the navigator can say on the phone to book a Pap/HPV screening for a new patient, mentioning the client's practical needs (insurance, hours, language) without any identifying details.
+Write two short pieces for a navigator referring a client for cervical cancer screening:
+- affirming: ONE short sentence (under 30 words) on what clients reported about how they were treated, citing only the affirming_evidence counts and quotes. A directory listing is self-reported and is NOT evidence on its own. If fewer than 3 clients rated respect, say the evidence is limited.
 - client_explainer: 2–3 warm, plain sentences the client can keep: cervical screening matters for anyone with a cervix regardless of who they date, and if a provider says she doesn't need it, she can say "I'd like the screening recommended by national guidelines for my age." No other medical advice.`,
     messages: [{ role: "user", content: JSON.stringify(input) }],
     output_config: { format: betaZodOutputFormat(ExplainSchema), effort: "low" },

@@ -24,6 +24,7 @@ function App() {
   const dueCount = state.referrals.filter((r) => r.status === "awaiting" && isDue(r.checkinDue)).length;
 
   const go = (t: Tab) => {
+    if (t === "refer" && tab !== "refer") setReferKey((k) => k + 1);
     setTab(t);
     window.scrollTo({ top: 0 });
   };
@@ -35,58 +36,39 @@ function App() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
-      <header className="flex flex-col gap-4 pt-6 sm:pt-10">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--ink)] sm:text-4xl">
-              bound<span className="text-[var(--affirm)]">.</span>
-            </h1>
-            <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">Affirming is a promise. We track whether it&apos;s kept.</p>
-          </div>
-          <button
-            onClick={() => {
-              reset();
-              setReferKey((k) => k + 1);
-              go("workspace");
-            }}
-            className="shrink-0 text-xs text-[var(--muted)] underline decoration-dashed hover:text-[var(--ink)]"
-          >
-            Reset demo
-          </button>
-        </div>
-        <nav className="flex gap-1 border-b border-[var(--line)]" aria-label="Sections">
+    <div className="mx-auto max-w-6xl px-4 pb-16 sm:px-8">
+      <header className="flex items-center gap-6 border-b border-[var(--line)] py-4">
+        <span className="text-[17px] font-semibold tracking-tight text-[var(--ink)]">bound</span>
+        <nav className="flex min-w-0 flex-1 gap-1 overflow-x-auto" aria-label="Sections">
           {TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => {
-                if (t.id === "refer" && tab !== "refer") setReferKey((k) => k + 1);
-                go(t.id);
-              }}
+              onClick={() => go(t.id)}
               aria-current={tab === t.id ? "page" : undefined}
-              className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition ${
-                tab === t.id ? "border-[var(--ink)] text-[var(--ink)]" : "border-transparent text-[var(--muted)] hover:text-[var(--ink)]"
+              className={`flex shrink-0 items-center gap-1.5 rounded px-2.5 py-1 text-[14px] transition-colors ${
+                tab === t.id ? "bg-[var(--chip)] font-medium text-[var(--ink)]" : "text-[var(--muted)] hover:text-[var(--ink)]"
               }`}
             >
               {t.label}
-              {!!t.badge && (
-                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[var(--bad)] px-1 text-[11px] font-semibold text-white">{t.badge}</span>
-              )}
+              {!!t.badge && <span className="text-[12px] font-medium text-[var(--bad-ink)]">{t.badge}</span>}
             </button>
           ))}
         </nav>
+        <button
+          onClick={() => {
+            reset();
+            setReferKey((k) => k + 1);
+            setTab("workspace");
+          }}
+          className="shrink-0 text-[12px] text-[var(--muted)] hover:text-[var(--ink)]"
+        >
+          Reset
+        </button>
       </header>
 
-      <main className="mt-6">
-        {!hydrated ? (
-          <p className="text-sm text-[var(--muted)]">Loading…</p>
-        ) : tab === "workspace" ? (
-          <WorkspaceTab
-            onNewReferral={() => {
-              setReferKey((k) => k + 1);
-              go("refer");
-            }}
-          />
+      <main className="mt-8">
+        {!hydrated ? null : tab === "workspace" ? (
+          <WorkspaceTab onNewReferral={() => go("refer")} />
         ) : tab === "refer" ? (
           <ReferTab key={referKey} onGoWorkspace={() => go("workspace")} />
         ) : (
@@ -94,9 +76,7 @@ function App() {
         )}
       </main>
 
-      <footer className="mt-12 border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
-        Providers from the CMS NPI Registry (plus one fictional). Outcomes and provider attributes are simulated.
-      </footer>
+      <footer className="mt-16 text-[11px] text-[var(--muted)]">Providers from the CMS NPI Registry (plus one fictional). Outcomes and attributes simulated.</footer>
     </div>
   );
 }

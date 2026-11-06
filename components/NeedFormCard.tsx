@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { answered, fromFilters, isComplete, LANGUAGES, NEED_FIELDS } from "@/lib/need";
 import type { NeedFilters, NeedForm } from "@/lib/types";
-import { Button, Card, Eyebrow, Field, Segmented } from "./ui";
+import { Button, Card, Field, Segmented, inputCls } from "./ui";
 
 export function NeedFormCard({
   value,
@@ -17,36 +17,28 @@ export function NeedFormCard({
   searched: boolean;
 }) {
   const set = <K extends keyof NeedForm>(k: K, v: NeedForm[K]) => onChange({ ...value, [k]: v });
-  const done = answered(value);
 
   return (
     <Card>
-      <div className="flex items-baseline justify-between gap-3">
-        <Eyebrow>Client&apos;s needs</Eyebrow>
-        <span className="text-xs tabular-nums text-[var(--muted)]">
-          {done} of {NEED_FIELDS.length} answered
-        </span>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-        <Field label="Care needed">
+      <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+        <Field label="Care">
           <Segmented
             value={value.careType}
             onChange={(v) => set("careType", v)}
             options={[
-              { value: "cervical_screening", label: "Cervical screening (Pap/HPV)" },
-              { value: "mammography" as never, label: "Mammogram · soon", disabled: true },
-              { value: "mental_health" as never, label: "Mental health · soon", disabled: true },
+              { value: "cervical_screening", label: "Cervical screening" },
+              { value: "mammography" as never, label: "Mammogram", disabled: true },
+              { value: "mental_health" as never, label: "Mental health", disabled: true },
             ]}
           />
         </Field>
-        <Field label="Also needs a regular doctor?">
+        <Field label="Needs a regular doctor">
           <Segmented
             value={value.primaryCare}
             onChange={(v) => set("primaryCare", v)}
             options={[
               { value: true, label: "Yes" },
-              { value: false, label: "No, has one" },
+              { value: false, label: "No" },
             ]}
           />
         </Field>
@@ -55,41 +47,37 @@ export function NeedFormCard({
             value={value.insurance}
             onChange={(v) => set("insurance", v)}
             options={[
-              { value: "uninsured", label: "Uninsured" },
+              { value: "uninsured", label: "None" },
               { value: "medicaid", label: "Medi-Cal" },
               { value: "private", label: "Private" },
-              { value: "unknown", label: "Not sure" },
+              { value: "unknown", label: "Unsure" },
             ]}
           />
         </Field>
-        <Field label="When can they go?">
+        <Field label="Availability">
           <Segmented
             value={value.hours}
             onChange={(v) => set("hours", v)}
             options={[
               { value: "any", label: "Any time" },
-              { value: "evenings", label: "Evenings only" },
+              { value: "evenings", label: "Evenings" },
             ]}
           />
         </Field>
-        <Field label="Getting there">
+        <Field label="Transport">
           <Segmented
             value={value.transport}
             onChange={(v) => set("transport", v)}
             options={[
-              { value: "car", label: "Has a car" },
-              { value: "transit", label: "Public transit" },
-              { value: "ride", label: "Needs a ride" },
+              { value: "car", label: "Car" },
+              { value: "transit", label: "Transit" },
+              { value: "ride", label: "Needs ride" },
             ]}
           />
         </Field>
-        <Field label="Preferred language">
-          <select
-            value={value.language ?? ""}
-            onChange={(e) => set("language", e.target.value || null)}
-            className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--ink)] sm:w-60"
-          >
-            <option value="">Choose…</option>
+        <Field label="Language">
+          <select value={value.language ?? ""} onChange={(e) => set("language", e.target.value || null)} className={`${inputCls} sm:w-56`}>
+            <option value="">Select</option>
             {LANGUAGES.map((l) => (
               <option key={l} value={l}>
                 {l}
@@ -99,18 +87,20 @@ export function NeedFormCard({
         </Field>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--line)] pt-4">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <Button onClick={onSubmit} disabled={!isComplete(value)}>
-          {searched ? "Update matches" : "Find providers"}
+          {searched ? "Update" : "Find providers"}
         </Button>
+        <span className="text-[12px] tabular-nums text-[var(--muted)]">
+          {answered(value)}/{NEED_FIELDS.length}
+        </span>
+        <DescribeAssist value={value} onChange={onChange} />
       </div>
-
-      <DescribeAssist value={value} onChange={onChange} />
     </Card>
   );
 }
 
-/** Optional: staff can type a quick description and Claude pre-fills the form. */
+/** Optional: a quick description that Claude turns into form answers. */
 function DescribeAssist({ value, onChange }: { value: NeedForm; onChange: (v: NeedForm) => void }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -127,16 +117,12 @@ function DescribeAssist({ value, onChange }: { value: NeedForm; onChange: (v: Ne
         body: JSON.stringify({ text }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Could not read that");
+      if (!res.ok) throw new Error(json.error ?? "Couldn't read that");
       const f = json as NeedFilters;
       const next = fromFilters(value, f, text);
       onChange(next);
       setText(""); // never keep the free text
-      setMsg(
-        f.pii_detected
-          ? { tone: "warn", text: "Identifying details detected. Text discarded." }
-          : { tone: "ok", text: `Filled ${answered(next)} of ${NEED_FIELDS.length}.` },
-      );
+      setMsg(f.pii_detected ? { tone: "warn", text: "Identifying details removed." } : { tone: "ok", text: `Filled ${answered(next)}/${NEED_FIELDS.length}` });
     } catch (e) {
       setMsg({ tone: "bad", text: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -145,32 +131,32 @@ function DescribeAssist({ value, onChange }: { value: NeedForm; onChange: (v: Ne
   }
 
   return (
-    <div className="mt-3">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="text-xs font-medium text-[var(--affirm-ink)] hover:underline">
-        {open ? "− Hide" : "+ Describe instead"}
-      </button>
-      {open && (
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+      {msg && (
+        <span
+          className={`text-[12px] ${msg.tone === "warn" ? "text-[var(--warn-ink)]" : msg.tone === "bad" ? "text-[var(--bad-ink)]" : "text-[var(--muted)]"}`}
+        >
+          {msg.text}
+        </span>
+      )}
+      {open ? (
+        <div className="flex w-full gap-2 sm:w-96">
           <input
+            autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && text.trim() && !busy && fill()}
-            placeholder="e.g. uninsured, works days so evenings, no car, prefers Spanish"
-            className="min-w-0 flex-1 rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--ink)]"
+            placeholder="e.g. uninsured, evenings, no car, Spanish"
+            className={inputCls}
           />
           <Button variant="secondary" onClick={fill} disabled={busy || !text.trim()}>
-            {busy ? "Reading…" : "Fill form"}
+            {busy ? "…" : "Fill"}
           </Button>
         </div>
-      )}
-      {msg && (
-        <p
-          className={`mt-2 text-xs ${
-            msg.tone === "warn" ? "text-[var(--warn-ink)]" : msg.tone === "bad" ? "text-[var(--bad-ink)]" : "text-[var(--complete-ink)]"
-          }`}
-        >
-          {msg.text}
-        </p>
+      ) : (
+        <Button variant="ghost" onClick={() => setOpen(true)}>
+          Describe instead
+        </Button>
       )}
     </div>
   );
