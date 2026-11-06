@@ -1,0 +1,333 @@
+[
+  {
+    "id": "1588606206",
+    "name": "SF Dept. of Public Health clinic — 3850 17th Street",
+    "specialty": "Clinic/Center, Federally Qualified Health Center (FQHC)",
+    "address": "3850 17th Street, San Francisco 94114",
+    "phone": "415-487-7500",
+    "isClinic": true,
+    "slidingScale": true,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "uninsured",
+      "medicaid",
+      "private"
+    ],
+    "eveningHours": true,
+    "languages": [
+      "English",
+      "Spanish"
+    ],
+    "transitNote": "Near Castro Muni station"
+  },
+  {
+    "id": "1538101126",
+    "name": "SF Dept. of Public Health clinic — 1000 Cayuga Avenue",
+    "specialty": "Clinic/Center, Federally Qualified Health Center (FQHC)",
+    "address": "1000 Cayuga Avenue, San Francisco 94112",
+    "phone": "415-469-4512",
+    "isClinic": true,
+    "slidingScale": true,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "uninsured",
+      "medicaid"
+    ],
+    "eveningHours": false,
+    "languages": [
+      "English",
+      "Spanish",
+      "Tagalog"
+    ],
+    "transitNote": "Near Balboa Park BART"
+  },
+  {
+    "id": "1144263518",
+    "name": "SF Dept. of Public Health clinic — 1490 Mason St",
+    "specialty": "Clinic/Center, Primary Care",
+    "address": "1490 Mason St, San Francisco 94133",
+    "phone": "415-705-8500",
+    "isClinic": true,
+    "slidingScale": true,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "uninsured",
+      "medicaid"
+    ],
+    "eveningHours": false,
+    "languages": [
+      "English",
+      "Cantonese"
+    ],
+    "transitNote": "Muni 30 / 45 lines"
+  },
+  {
+    "id": "1598705451",
+    "name": "SF Dept. of Public Health clinic — 1351 24th Ave",
+    "specialty": "Clinic/Center, Primary Care",
+    "address": "1351 24th Ave, San Francisco 94122",
+    "phone": "415-682-1900",
+    "isClinic": true,
+    "slidingScale": true,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "uninsured",
+      "medicaid",
+      "private"
+    ],
+    "eveningHours": true,
+    "languages": [
+      "English",
+      "Cantonese",
+      "Russian"
+    ],
+    "transitNote": "N-Judah line"
+  },
+  {
+    "id": "1376798413",
+    "name": "Asian And Pacific Islander Wellness Center, INC.",
+    "specialty": "Clinic/Center, Federally Qualified Health Center (FQHC)",
+    "address": "726 Polk St, San Francisco 94109",
+    "phone": "415-292-3400",
+    "isClinic": true,
+    "slidingScale": true,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "uninsured",
+      "medicaid",
+      "private"
+    ],
+    "eveningHours": true,
+    "languages": [
+      "English",
+      "Vietnamese",
+      "Spanish"
+    ],
+    "transitNote": "Near Civic Center BART"
+  },
+  {
+    "id": "1417974858",
+    "name": "Margarita Alvarado M.D.",
+    "specialty": "Obstetrics & Gynecology, Gynecology",
+    "address": "3139 Mission St, San Francisco 94110",
+    "phone": "415-643-7300",
+    "isClinic": false,
+    "slidingScale": false,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "medicaid",
+      "private"
+    ],
+    "eveningHours": false,
+    "languages": [
+      "English",
+      "Spanish"
+    ],
+    "transitNote": "Near 24th St Mission BART"
+  },
+  {
+    "id": "1851335624",
+    "name": "Amy Autry MD",
+    "specialty": "Obstetrics & Gynecology",
+    "address": "2356 Sutter St, San Francisco 94115",
+    "phone": "415-885-7788",
+    "isClinic": false,
+    "slidingScale": false,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "private"
+    ],
+    "eveningHours": false,
+    "languages": [
+      "English"
+    ],
+    "transitNote": "Muni 2 / 3 lines"
+  },
+  {
+    "id": "1821185133",
+    "name": "Effiem Abbah MD, MPH",
+    "specialty": "Family Medicine",
+    "address": "601 Van Ness Ave Ste 2008, San Francisco 94102",
+    "phone": "415-674-7000",
+    "isClinic": false,
+    "slidingScale": false,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "medicaid",
+      "private"
+    ],
+    "eveningHours": true,
+    "languages": [
+      "English"
+    ],
+    "transitNote": "Near Civic Center BART"
+  },
+  {
+    "id": "1417977315",
+    "name": "Paul Abramson M.D.",
+    "specialty": "Family Medicine",
+    "address": "450 Sutter St Rm 840, San Francisco 94108",
+    "phone": "415-963-4431",
+    "isClinic": false,
+    "slidingScale": false,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "private"
+    ],
+    "eveningHours": false,
+    "languages": [
+      "English"
+    ],
+    "transitNote": "Near Montgomery BART"
+  },
+  {
+    "id": "1952494973",
+    "name": "Adam Bellamy MD",
+    "specialty": "Family Medicine",
+    "address": "2325 Ocean Ave Ste 1, San Francisco 94127",
+    "phone": "415-452-2000",
+    "isClinic": true,
+    "slidingScale": false,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "private",
+      "medicaid"
+    ],
+    "eveningHours": true,
+    "languages": [
+      "English",
+      "Spanish"
+    ],
+    "transitNote": "K-Ingleside line"
+  },
+  {
+    "id": "1154458859",
+    "name": "Priscilla Abercrombie NP",
+    "specialty": "Nurse Practitioner, Obstetrics & Gynecology",
+    "address": "1001 Potrero, Nh 5m5, San Francisco 94110",
+    "phone": "415-206-3409",
+    "isClinic": false,
+    "slidingScale": false,
+    "source": "CMS NPI Registry",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "uninsured",
+      "medicaid",
+      "private"
+    ],
+    "eveningHours": false,
+    "languages": [
+      "English",
+      "Spanish"
+    ],
+    "transitNote": "Muni 9 / 33 lines"
+  },
+  {
+    "id": "fictional-rww",
+    "name": "Rainbow Women's Wellness",
+    "specialty": "Women's Health (fictional demo provider)",
+    "address": "Market St, San Francisco (fictional)",
+    "phone": null,
+    "isClinic": true,
+    "slidingScale": true,
+    "source": "fictional",
+    "careTypes": [
+      "cervical_screening",
+      "primary_care"
+    ],
+    "directoryAffirming": true,
+    "insurance": [
+      "uninsured",
+      "medicaid",
+      "private"
+    ],
+    "eveningHours": true,
+    "languages": [
+      "English",
+      "Spanish"
+    ],
+    "transitNote": "Near Church St Muni"
+  },
+  {
+    "id": "program-ewc",
+    "name": "Every Woman Counts (California NBCCEDP)",
+    "specialty": "Free cervical & breast cancer screening program",
+    "address": "Statewide — call to find an enrolled provider",
+    "phone": "800-511-2300",
+    "isClinic": false,
+    "slidingScale": true,
+    "source": "program",
+    "careTypes": [
+      "cervical_screening"
+    ],
+    "directoryAffirming": false,
+    "insurance": [
+      "uninsured"
+    ],
+    "eveningHours": false,
+    "languages": [
+      "English",
+      "Spanish",
+      "Chinese",
+      "Vietnamese",
+      "Korean",
+      "Tagalog"
+    ],
+    "transitNote": "Phone referral",
+    "note": "Free for eligible uninsured/underinsured clients, ages 21–64, at or below 250% FPL."
+  }
+]
