@@ -1,10 +1,10 @@
 "use client";
 
 import type { Ranked } from "@/lib/score";
-import type { Explanation } from "@/lib/types";
 import { ScoreBar } from "./ScoreBar";
+import { Pill } from "./ui";
 
-const SOURCE_LABEL = {
+export const SOURCE_LABEL = {
   "CMS NPI Registry": "Real provider · CMS NPI Registry",
   fictional: "Fictional demo provider",
   program: "Public program · CDC NBCCEDP",
@@ -13,42 +13,36 @@ const SOURCE_LABEL = {
 export function ProviderCard({
   r,
   position,
-  delta,
-  referred,
-  explanation,
-  explaining,
-  onRefer,
-  onExplain,
+  selected,
+  onChoose,
 }: {
   r: Ranked;
-  position: number;
-  delta: { before: number; after: number } | null;
-  referred: boolean;
-  explanation: Explanation | null;
-  explaining: boolean;
-  onRefer: () => void;
-  onExplain: () => void;
+  position?: number;
+  selected: boolean;
+  onChoose: () => void;
 }) {
   const { provider: p, stats: s } = r;
   const hasOutcomes = s.n > 0;
   return (
     <article
-      className={`rounded-2xl border bg-[var(--card)] p-4 shadow-sm transition-colors sm:p-5 ${
-        s.gapFlag ? "border-[var(--bad)]/60 ring-1 ring-[var(--bad)]/30" : "border-[var(--line)]"
+      className={`rounded-2xl border bg-[var(--card)] p-4 transition sm:p-5 ${
+        selected
+          ? "border-[var(--ink)] ring-2 ring-[var(--ink)]/15"
+          : s.gapFlag
+            ? "border-[var(--bad)]/60"
+            : "border-[var(--line)]"
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ink)] text-xs font-semibold text-[var(--card)]">
-          {position}
-        </div>
+        {position != null && (
+          <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ink)] text-xs font-semibold text-[var(--card)]">
+            {position}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h3 className="text-base font-semibold text-[var(--ink)]">{p.name}</h3>
-            {p.directoryAffirming && (
-              <span className="rounded-full bg-[var(--affirm)]/15 px-2 py-0.5 text-[11px] font-medium text-[var(--affirm-ink)]">
-                🏳️‍🌈 Listed as affirming in directories
-              </span>
-            )}
+            {p.directoryAffirming && <Pill tone="affirm">🏳️‍🌈 Listed as affirming in directories</Pill>}
           </div>
           <p className="mt-0.5 text-sm text-[var(--muted)]">
             {p.specialty} · {p.address}
@@ -57,9 +51,7 @@ export function ProviderCard({
           <div className="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
             <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[var(--muted)]">{SOURCE_LABEL[p.source]}</span>
             {hasOutcomes && (
-              <span className="rounded-full border border-dashed border-[var(--muted)]/60 px-2 py-0.5 text-[var(--muted)]">
-                Simulated outcomes
-              </span>
+              <span className="rounded-full border border-dashed border-[var(--muted)]/60 px-2 py-0.5 text-[var(--muted)]">Simulated outcomes</span>
             )}
             {r.fitReasons.map((f) => (
               <span key={f} className="rounded-full bg-[var(--chip)] px-2 py-0.5 text-[var(--ink)]">
@@ -72,34 +64,20 @@ export function ProviderCard({
 
       {hasOutcomes ? (
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ScoreBar label="Affirming experience" value={s.affirming} tone="affirm" />
           <ScoreBar
-            label="Affirming experience"
-            value={s.affirming}
-            detail="Respect, no need to explain identity"
-            tone="affirm"
+            label="Care completed"
+            value={s.completion}
+            detail={`${s.completed} of ${s.n} screened${s.medianDays != null ? ` · ${s.medianDays} days median` : ""}`}
+            tone={s.completion < 0.5 ? "bad" : "complete"}
           />
-          <div className="relative">
-            <ScoreBar
-              label="Care completed"
-              value={s.completion}
-              detail={`${s.completed} of ${s.n} screened${s.medianDays != null ? ` · median ${s.medianDays} days to visit` : ""}`}
-              tone={s.completion < 0.5 ? "bad" : "complete"}
-            />
-            {delta && (
-              <span className="absolute -top-1 right-12 animate-pulse rounded-full bg-[var(--bad)] px-2 py-0.5 text-[11px] font-semibold text-white">
-                {delta.after < delta.before ? "▼" : "▲"} {Math.round(delta.before * 100)}% → {Math.round(delta.after * 100)}%
-              </span>
-            )}
-          </div>
         </div>
       ) : (
         <p className="mt-3 text-sm text-[var(--muted)]">{p.note ?? "No outcomes yet."}</p>
       )}
 
       {!s.verified && hasOutcomes && (
-        <p className="mt-3 text-xs text-[var(--muted)]">
-          Unverified: only {s.n} outcome{s.n === 1 ? "" : "s"} so far, so it&apos;s ranked on a neutral prior until 5 come in.
-        </p>
+        <p className="mt-3 text-xs text-[var(--muted)]">Unverified · {s.n} outcome{s.n === 1 ? "" : "s"}</p>
       )}
 
       {(s.gapFlag || s.patterns.length > 0) && (
@@ -117,37 +95,14 @@ export function ProviderCard({
         </ul>
       )}
 
-      {explanation && (
-        <div className="mt-3 space-y-2 rounded-xl bg-[var(--chip)] p-3 text-sm text-[var(--ink)]">
-          <p>
-            <span className="font-semibold">Why: </span>
-            {explanation.reason}
-          </p>
-          <p className="whitespace-pre-line">
-            <span className="font-semibold">Booking script: </span>
-            {explanation.booking_script}
-          </p>
-          <p>
-            <span className="font-semibold">For the client: </span>
-            {explanation.client_explainer}
-          </p>
-        </div>
-      )}
-
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4">
         <button
-          onClick={onRefer}
-          disabled={referred}
-          className="rounded-full bg-[var(--ink)] px-4 py-1.5 text-sm font-medium text-[var(--card)] transition hover:opacity-90 disabled:opacity-40"
+          onClick={onChoose}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+            selected ? "bg-[var(--complete)] text-white" : "bg-[var(--ink)] text-[var(--card)] hover:opacity-90"
+          }`}
         >
-          {referred ? "Referral logged ✓" : "Log referral"}
-        </button>
-        <button
-          onClick={onExplain}
-          disabled={explaining}
-          className="rounded-full border border-[var(--line)] px-4 py-1.5 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--chip)] disabled:opacity-50"
-        >
-          {explaining ? "Writing…" : explanation ? "Rewrite script" : "Why + booking script"}
+          {selected ? "Chosen ✓" : s.gapFlag ? "Choose anyway" : "Choose this provider"}
         </button>
       </div>
     </article>

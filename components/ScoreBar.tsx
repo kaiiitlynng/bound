@@ -6,7 +6,7 @@ export function ScoreBar({
 }: {
   label: string;
   value: number | null;
-  detail: string;
+  detail?: string;
   tone: "affirm" | "complete" | "bad";
 }) {
   const pct = value == null ? 0 : Math.round(value * 100);
@@ -20,7 +20,7 @@ export function ScoreBar({
       <div className="mt-1 h-2 overflow-hidden rounded-full bg-[var(--track)]">
         <div className={`h-full rounded-full ${color} transition-[width] duration-700 ease-out`} style={{ width: `${pct}%` }} />
       </div>
-      <div className="mt-1 text-[11px] text-[var(--muted)]">{detail}</div>
+      {detail && <div className="mt-1 text-[11px] text-[var(--muted)]">{detail}</div>}
     </div>
   );
 }

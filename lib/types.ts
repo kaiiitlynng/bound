@@ -52,6 +52,7 @@ export interface Outcome {
   note: string;
   simulated: boolean;
   source: "seed" | "checkin";
+  date?: string;
 }
 
 export interface NeedFilters {
@@ -74,11 +75,37 @@ export interface CheckinResult {
   crisis: boolean;
 }
 
+export type ReferralStatus = "awaiting" | "closed" | "no_response" | "handoff";
+
+/** A referral record: care type, provider, dates. No client name, contact, or identity. */
 export interface Referral {
   id: string;
   providerId: string;
   careType: CareType;
   createdAt: string;
+  checkinDue: string;
+  method: "text" | "call";
+  needSummary: string;
+  status: ReferralStatus;
+  outcomeId?: string;
+  closedAt?: string;
+}
+
+/** Staff knowledge about a provider. Never about a specific client. */
+export interface StaffNote {
+  id: string;
+  providerId: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface NeedForm {
+  careType: CareType | null;
+  primaryCare: boolean | null;
+  insurance: Insurance | null;
+  hours: "any" | "evenings" | null;
+  transport: "car" | "transit" | "ride" | null;
+  language: string | null;
 }
 
 export interface Explanation {

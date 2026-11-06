@@ -11,6 +11,7 @@ export interface ProviderStats {
   medianDays: number | null;
   verified: boolean;
   gapFlag: boolean;
+  recommended: boolean;
   patterns: { tag: Exclude<Tag, "none">; count: number; text: string }[];
 }
 
@@ -48,6 +49,7 @@ export function statsFor(outcomes: Outcome[]): ProviderStats {
     .map(([tag, count]) => ({ tag, count, text: `${count} of ${n} clients report ${TAG_LABELS[tag]}` }));
 
   const verified = n >= VERIFIED_MIN;
+  const gapFlag = verified && affirming != null && affirming >= 0.75 && completion < 0.5;
   return {
     n,
     completed,
@@ -55,7 +57,9 @@ export function statsFor(outcomes: Outcome[]): ProviderStats {
     affirming,
     medianDays: median(outcomes.flatMap((o) => (o.daysToAppt != null ? [o.daysToAppt] : []))),
     verified,
-    gapFlag: verified && affirming != null && affirming >= 0.75 && completion < 0.5,
+    gapFlag,
+    // Recommended only when BOTH dimensions are good.
+    recommended: verified && !gapFlag && completion >= 0.6 && (affirming ?? 0) >= 0.7,
     patterns,
   };
 }
@@ -64,11 +68,8 @@ function fitFor(p: Provider, f: NeedFilters | null): { fit: number; reasons: str
   if (!f) return { fit: 0, reasons: [] };
   let fit = 0;
   const reasons: string[] = [];
-  if (f.insurance !== "unknown") {
-    if (p.insurance.includes(f.insurance)) {
-      fit += 0.06;
-      reasons.push(f.insurance === "uninsured" ? (p.slidingScale ? "free / sliding scale" : "sees uninsured") : `takes ${f.insurance}`);
-    } else fit -= 0.15;
+  if (f.insurance !== "unknown" && p.insurance.includes(f.insurance)) {
+    reasons.push(f.insurance === "uninsured" ? (p.slidingScale ? "free / sliding scale" : "sees uninsured") : f.insurance === "medicaid" ? "takes Medi-Cal" : "takes private insurance");
   }
   if (f.needs_evening) {
     if (p.eveningHours) { fit += 0.04; reasons.push("evening hours"); } else fit -= 0.05;
@@ -84,6 +85,8 @@ function fitFor(p: Provider, f: NeedFilters | null): { fit: number; reasons: str
 export function rank(providers: Provider[], outcomes: Outcome[], careType: CareType, filters: NeedFilters | null): Ranked[] {
   return providers
     .filter((p) => p.careTypes.includes(careType))
+    // Insurance is a hard filter; everything else adjusts fit.
+    .filter((p) => !filters || filters.insurance === "unknown" || p.insurance.includes(filters.insurance))
     .map((provider) => {
       const stats = statsFor(outcomes.filter((o) => o.providerId === provider.id && o.careType === careType));
       const { fit, reasons } = fitFor(provider, filters);
@@ -107,3 +110,18 @@ export function funderSummary(outcomes: Outcome[], providers: Provider[], careTy
     verified,
   };
 }
+
+export type ProviderStatus = "recommended" | "flagged" | "unverified" | "mixed";
+
+export function statusOf(s: ProviderStats): ProviderStatus {
+  if (s.gapFlag) return "flagged";
+  if (!s.verified) return "unverified";
+  return s.recommended ? "recommended" : "mixed";
+}
+
+export const STATUS_LABEL: Record<ProviderStatus, string> = {
+  recommended: "Recommended",
+  flagged: "Affirming ≠ care completed",
+  unverified: "Unverified",
+  mixed: "Mixed results",
+};
